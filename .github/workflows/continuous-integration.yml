@@ -1,0 +1,85 @@
+name: "Continuous Integration"
+
+on: [push, pull_request]
+
+jobs:
+
+  phpunit-mariadb:
+    name: "PHPUnit with MariaDB: ${{ matrix.mariadb-version }}, PHP: ${{ matrix.php-version }}, extension: ${{ matrix.extension }}"
+    runs-on: ubuntu-latest
+    strategy:
+      # If true, stop jobs if a required job fails:
+      fail-fast: false
+      matrix:
+        # Define jobs for all combinations of php, mariadb and extension, up to "include"
+        # Tests will be performed for each combination
+        php-version: ["5.4", "5.5", "5.6", "7.0", "7.1", "7.4"]
+        mariadb-version: ["10.3"]
+        extension: ["pdo_mysql"]
+        include:
+          - php-version: "5.4"
+            composer-json: "composer-5.4.json"
+          - php-version: "5.5"
+            composer-json: "composer-5.4.json"
+          - php-version: "5.6"
+            composer-json: "composer-5.4.json"
+          - php-version: "7.0"
+            composer-json: "composer-5.4.json"
+          - php-version: "7.1"
+            composer-json: "composer-5.4.json"
+          - php-version: "7.4"
+            composer-json: "composer.json"
+
+    services:
+      mariadb:
+        image: "mariadb:${{ matrix.mariadb-version }}"
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: "doctrine"
+          MYSQL_USER: "user"
+          MYSQL_PASSWORD: "password"
+
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+        ports:
+          - "3306:3306"
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 2
+
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          php-version: "${{ matrix.php-version }}"
+          coverage: "xdebug"
+          extensions: "${{ matrix.extension }}"
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Install dependencies
+        env:
+          COMPOSER: ${{ matrix.composer-json }}
+        run: composer install --no-progress
+
+      - name: Set up unit testing
+        run: .github/actions/setup.sh
+        env:
+          DB: mysql
+
+      - name: Run unit tests
+        run: .github/actions/run_tests.sh
+
+      - name: "Upload to Codecov"
+        uses: "codecov/codecov-action@v4"
