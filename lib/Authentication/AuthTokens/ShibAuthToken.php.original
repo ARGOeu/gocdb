@@ -164,31 +164,6 @@ class ShibAuthToken implements IAuthentication {
             $this->userDetails = array('AuthenticationRealm' => array('EGI Proxy IdP'));
             return;
         }
-        else if($idp == 'https://core-infra-proxy.eosc.grnet.gr/auth/realms/core'){
-            if( empty($_SERVER['voPersonID'])){
-                die('Did not receive required voPersonID attribute from the EOSC EU Node AAI (Staging) to complete authentication, please contact gocdb-admins');
-            }
-	    /* TODO
-            if(empty($_SERVER['entitlement'])){
-                die('Did not receive the required entitlement attribute from the EOSC EU Node AAI (Testing), please contact gocdb-admins');
-            }
-            $entitlementValuesArray = explode(';', $_SERVER['entitlement']);
-	    */
-	    /*
-	     * TODO
-	     * if( !in_array('urn:mace:egi.eu:res:gocdb#aai.egi.eu', $entitlementValuesArray) ){
-                 $HTML = '<ul><li>You authenticated to the EGI Demo Identity Provider using a method that does not provide a GOCDB entitlement.</li><li>Login is required with a gocdb entitlement.</li><li>To gain access, you will need to login to the Proxy IdP using a scheme that provides a gocdb entitlement.</li><li>Please logout or restart your browser and attempt to login again.</li></ul>';
-                 $HTML .= "<div style='text-align: center;'>";
-                 $HTML .= '<a href="'.htmlspecialchars(\Factory::$properties['LOGOUTURL']).'"><b><font colour="red">Logout</font></b></a>';
-                 $HTML .= "</div>";
-                 echo ($HTML);
-                 die();
-            }
-	     */
-            $this->principal = $_SERVER['voPersonID'];
-            $this->userDetails = array('AuthenticationRealm' => array('EOSC'));
-            return;
-        }
     }
 
     /**
@@ -230,4 +205,3 @@ class ShibAuthToken implements IAuthentication {
     }
 
 }
-
