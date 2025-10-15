@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - master
+      - dev
 jobs:
   supply-chain:
       runs-on: ubuntu-latest
